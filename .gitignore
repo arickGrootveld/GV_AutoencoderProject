@@ -1,0 +1,6 @@
+# Code editor files and folders
+.vscode
+
+# Folders specific to the implementation
+figures/*.png
+models/*.h5
