@@ -4,3 +4,5 @@
 # Folders specific to the implementation
 figures/*.png
 models/*.h5
+__pycache__/
+data/
