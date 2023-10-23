@@ -129,7 +129,7 @@ def main():
 
     if args.valid:
         print("Loading checkpoint...")
-        autoencoder.load_state_dict(torch.load("./weights/autoencoder.pkl"))
+        autoencoder.load_state_dict(torch.load("./models/autoencoder.pkl"))
         dataiter = iter(testloader)
         images, labels = dataiter.next()
         print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(16)))
