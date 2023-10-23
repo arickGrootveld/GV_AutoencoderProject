@@ -4,5 +4,7 @@
 # Folders specific to the implementation
 figures/*.png
 models/*.h5
+models/*.pkl
+data/*
 __pycache__/
 data/

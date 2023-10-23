@@ -42,8 +42,8 @@ def print_model(encoder, decoder):
     print("")
 
 
-def create_model():
-    autoencoder = Autoencoder()
+def create_model(embDim = 100):
+    autoencoder = Autoencoder(embDim=embDim)
     print_model(autoencoder.encoder, autoencoder.decoder)
     if torch.cuda.is_available():
         autoencoder = autoencoder.cuda()
@@ -64,7 +64,7 @@ def imshow(img):
 
 
 class Autoencoder(nn.Module):
-    def __init__(self):
+    def __init__(self, embDim=100):
         super(Autoencoder, self).__init__()
         # Input size: [batch, 3, 32, 32]
         # Output size: [batch, 3, 32, 32]
@@ -77,6 +77,16 @@ class Autoencoder(nn.Module):
             nn.ReLU(),
 # 			nn.Conv2d(48, 96, 4, stride=2, padding=1),           # [batch, 96, 2, 2]
 #             nn.ReLU(),
+        )
+        self.compressor = nn.Sequential(
+            nn.Flatten(),
+            nn.LazyLinear(out_features=embDim),
+            nn.ReLU()
+        )
+        self.uncompressor = nn.Sequential(
+            nn.Linear(in_features=embDim, out_features=768),
+            nn.ReLU(),
+            nn.Unflatten(dim=-1, unflattened_size=(48, 4, 4))
         )
         self.decoder = nn.Sequential(
 #             nn.ConvTranspose2d(96, 48, 4, stride=2, padding=1),  # [batch, 48, 4, 4]
@@ -91,7 +101,9 @@ class Autoencoder(nn.Module):
 
     def forward(self, x):
         encoded = self.encoder(x)
-        decoded = self.decoder(encoded)
+        compressed = self.compressor(encoded)
+        uncompressed = self.uncompressor(compressed)
+        decoded = self.decoder(uncompressed)
         return encoded, decoded
 
 def main():
@@ -102,6 +114,8 @@ def main():
                         help='Number of epochs to train the AE on [default: 1]')
     parser.add_argument("-b", "--batchSize", default=64, type=int,
                         help="Batch size of the data used for training and testing [default: 64]")
+    parser.add_argument("-z", "--embDim", default=100, type=int,
+                        help="Number of dimensions for the low dimension representation [default: 100]")
     args = parser.parse_args()
 
     print(args.epochs)
@@ -109,9 +123,10 @@ def main():
 
     numEpochs = args.epochs
     batchSize = args.batchSize
+    embeddingDim = args.embDim
 
     # Create model
-    autoencoder = create_model()
+    autoencoder = create_model(embDim=embeddingDim)
 
     # Load data
     transform = transforms.Compose(
@@ -131,11 +146,11 @@ def main():
         print("Loading checkpoint...")
         autoencoder.load_state_dict(torch.load("./models/autoencoder.pkl"))
         dataiter = iter(testloader)
-        images, labels = dataiter.next()
+        images, labels = dataiter._next_data()
         print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(16)))
         imshow(torchvision.utils.make_grid(images))
 
-        images = Variable(images.cuda())
+        images = get_torch_vars(images)
 
         decoded_imgs = autoencoder(images)[1]
         imshow(torchvision.utils.make_grid(decoded_imgs.data))
