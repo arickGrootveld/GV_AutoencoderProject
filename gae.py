@@ -173,9 +173,9 @@ def main():
 
     print('Finished Training')
     print('Saving Model...')
-    if not os.path.exists('./weights'):
-        os.mkdir('./weights')
-    torch.save(autoencoder.state_dict(), "./weights/autoencoder.pkl")
+    if not os.path.exists('./models'):
+        os.mkdir('./models')
+    torch.save(autoencoder.state_dict(), "./models/gae_autoencoder.pkl")
 
 
 if __name__ == '__main__':
